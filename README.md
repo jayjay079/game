@@ -16,8 +16,8 @@ Ein modernes 2D Jump & Run Spiel im Browser mit **hochauflösenden Grafiken** un
 ### 🎨 Grafik (NEU!)
 - ✅ **Hochauflösende Sprite-Sheets** für Charakter, Gegner & Items
 - ✅ **Echte Parallax-Backgrounds** mit 4 Bild-Layern
+- ✅ **Lokale Assets** mit automatischem S3-Fallback
 - ✅ Professionelle Vektorgrafiken statt prozeduraler Shapes
-- ✅ Smooth Gradients und moderne Farben
 - ✅ Loading Screen mit Fortschrittsanzeige
 
 ### 🎵 Sound
@@ -32,30 +32,72 @@ Ein modernes 2D Jump & Run Spiel im Browser mit **hochauflösenden Grafiken** un
 
 ---
 
-## 📦 Installation
+## 📦 Installation & Setup
 
-### Mit XAMPP:
+### Schritt 1: Repository klonen
 
-1. **Repository klonen:**
 ```bash
 cd C:\xampp\htdocs
 git clone https://github.com/jayjay079/game.git
+cd game
 ```
 
-2. **Apache starten** in XAMPP Control Panel
+### Schritt 2: Assets herunterladen (WICHTIG!) ⚡
 
-3. **Browser öffnen:**
-```
-http://localhost/game
+Grafiken werden **lokal** gespeichert für schnellere Ladezeiten:
+
+#### Windows:
+```bash
+# Doppelklick auf:
+download-assets.bat
 ```
 
-4. **Grafiken werden automatisch geladen!** 🎉
+#### Linux/Mac:
+```bash
+chmod +x download-assets.sh
+./download-assets.sh
+```
+
+**Was passiert:**
+- Lädt 8 Grafiken (~7 MB) in `assets/` Ordner
+- Zeigt Fortschritt für jede Datei
+- Dauert ca. 10-30 Sekunden
+
+### Schritt 3: Spiel starten
+
+1. **Apache starten** in XAMPP Control Panel
+2. **Browser öffnen:** `http://localhost/game`
+3. **Spielen!** 🎮
+
+---
+
+## 💾 Lokale vs. S3 Assets
+
+### ⚡ Lokale Assets (Empfohlen)
+
+**Vorteile:**
+- 🚀 **10x schneller** - Keine Internet-Latenz
+- 💾 **Offline-fähig** - Spiel funktioniert ohne Internet
+- 🛠️ **Anpassbar** - Eigene Grafiken einfach austauschen
+
+**Setup:** Einmalig `download-assets.bat` ausführen
+
+### ☁️ S3 Fallback (Automatisch)
+
+Falls lokale Dateien fehlen:
+- ✅ Lädt automatisch von S3
+- ✅ Keine Fehlermeldungen
+- ⚠️ Langsamer (2-8 Sekunden Ladezeit)
+
+**Du musst nichts tun** - das System entscheidet automatisch!
+
+👉 Mehr Infos: [ASSETS_README.md](ASSETS_README.md)
 
 ---
 
 ## 📸 Grafik-Assets
 
-Alle hochauflösenden Grafiken werden automatisch beim Start geladen:
+Alle hochauflösenden Grafiken:
 
 ### Sprite Sheets:
 - ✅ **Character** - Idle, Running, Jumping, Damage Animationen
@@ -64,12 +106,12 @@ Alle hochauflösenden Grafiken werden automatisch beim Start geladen:
 - ✅ **Tileset** - Plattformen & Dekorations-Elemente
 
 ### Parallax Backgrounds:
-- ✅ **Mountains** - Entfernte lila Berge
-- ✅ **Hills** - Grüne Hügel in mehreren Ebenen
-- ✅ **Clouds** - Fluffy weiße Wolken
-- ✅ **Trees** - Bäume und Vegetation
+- ✅ **Mountains** - Entfernte lila Berge (Scroll Speed: 0.1)
+- ✅ **Hills** - Grüne Hügel (Scroll Speed: 0.3)
+- ✅ **Clouds** - Fluffy weiße Wolken (Scroll Speed: 0.2)
+- ✅ **Trees** - Bäume & Vegetation (Scroll Speed: 0.7)
 
-👉 Alle Grafiken ansehen: [GRAPHICS.md](GRAPHICS.md)
+👉 Grafiken ansehen: [GRAPHICS.md](GRAPHICS.md)
 
 ---
 
@@ -77,7 +119,7 @@ Alle hochauflösenden Grafiken werden automatisch beim Start geladen:
 
 - **HTML5 Canvas** für Rendering
 - **Vanilla JavaScript** (ES6+)
-- **Asset Loader System** für Grafiken
+- **Asset Loader System** mit lokalen Pfaden + S3 Fallback
 - **Web Audio API** für Sound
 - **RequestAnimationFrame** für 60 FPS Loop
 - **Modulare Architektur**
@@ -86,23 +128,37 @@ Alle hochauflösenden Grafiken werden automatisch beim Start geladen:
 
 ```
 game/
-├── index.html          # Hauptseite mit Loading Screen
+├── assets/                 # ⚡ Lokale Grafiken (nach Download)
+│   ├── sprites/
+│   │   ├── character.png
+│   │   ├── enemies.png
+│   │   ├── items.png
+│   │   └── tileset.png
+│   └── backgrounds/
+│       ├── mountains.png
+│       ├── hills.png
+│       ├── clouds.png
+│       └── trees.png
+├── index.html
+├── download-assets.bat    # ⚡ Windows Asset Download
+├── download-assets.sh     # ⚡ Linux/Mac Asset Download
 ├── css/
-│   └── style.css       # Styling + Loading Bar
+│   └── style.css
 ├── js/
-│   ├── main.js         # Entry Point mit Asset Loading
-│   ├── assets.js       # ✨ NEU: Asset Loader System
-│   ├── game.js         # Game Loop & Manager
-│   ├── player.js       # Spieler-Logik
-│   ├── enemies.js      # 3 Gegner-Typen
-│   ├── entities.js     # Plattformen, Münzen, Kristalle
-│   ├── level.js        # Level-System
-│   ├── physics.js      # Physik-Engine
-│   ├── parallax.js     # ✨ Parallax mit Bild-Support
-│   ├── input.js        # Tastatur-Handler
-│   ├── sound.js        # Sound-System
-│   └── utils.js        # Hilfsfunktionen
-├── GRAPHICS.md         # ✨ Grafik-Galerie
+│   ├── main.js
+│   ├── assets.js          # ⚡ Asset Loader (lokal + S3)
+│   ├── game.js
+│   ├── player.js
+│   ├── enemies.js
+│   ├── entities.js
+│   ├── level.js
+│   ├── physics.js
+│   ├── parallax.js
+│   ├── input.js
+│   ├── sound.js
+│   └── utils.js
+├── GRAPHICS.md            # 🎨 Grafik-Galerie
+├── ASSETS_README.md       # 💾 Asset-Verwaltung
 └── README.md
 ```
 
@@ -126,9 +182,10 @@ game/
 
 ## 🚀 Entwicklung
 
-### Aktueller Stand: v1.0.0
+### Aktueller Stand: v1.1.0
 - ✅ Vollständige Game-Engine
 - ✅ Hochauflösende Grafiken integriert
+- ✅ **Lokale Assets mit S3-Fallback** ⚡
 - ✅ Parallax-Scrolling mit echten Bildern
 - ✅ Asset-Loading-System
 - ✅ Demo-Level (Welt 1)
@@ -146,11 +203,37 @@ game/
 
 ---
 
-## 🐛 Bekannte Probleme
+## 🐛 Troubleshooting
 
-- Sprites werden noch prozedural gezeichnet (Integration geplant)
-- Nur 1 Demo-Level verfügbar
-- Keine Mobile-Controls
+### Problem: Grafiken laden langsam
+
+**Lösung:**
+```bash
+# Assets lokal herunterladen:
+download-assets.bat  # Windows
+./download-assets.sh # Linux/Mac
+```
+
+### Problem: "Failed to load assets"
+
+**Lösung:**
+1. Prüfe Internet-Verbindung (für S3-Fallback)
+2. Nutze XAMPP statt direktes Öffnen (CORS!)
+3. Browser-Cache leeren (Strg + F5)
+
+### Problem: Assets im falschen Verzeichnis
+
+**Lösung:**
+```bash
+# Verzeichnisstruktur prüfen:
+dir assets\sprites      # Windows
+ls -l assets/sprites    # Linux/Mac
+
+# Sollte enthalten:
+# character.png, enemies.png, items.png, tileset.png
+```
+
+👉 Mehr Lösungen: [ASSETS_README.md](ASSETS_README.md)
 
 ---
 
@@ -171,4 +254,18 @@ game/
 
 **Viel Spaß beim Sammeln, Springen und Erkunden! 🎮✨**
 
-Bei Fragen oder Feedback: [GitHub Issues](https://github.com/jayjay079/game/issues)
+### Weitere Dokumentation:
+- 🎨 [Grafik-Galerie](GRAPHICS.md) - Alle Assets ansehen
+- 💾 [Asset-Verwaltung](ASSETS_README.md) - Lokale Grafiken verwalten
+- 🐛 [GitHub Issues](https://github.com/jayjay079/game/issues) - Bugs melden
+
+---
+
+**Quick Start:**
+```bash
+git clone https://github.com/jayjay079/game.git
+cd game
+download-assets.bat  # Assets herunterladen
+# Starte XAMPP Apache
+# Öffne: http://localhost/game
+```
