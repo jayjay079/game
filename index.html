@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Crystal Rush - A Jump & Run Adventure</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -32,6 +32,7 @@
                     <p>← → oder A D: Bewegung</p>
                     <p>Leertaste oder W: Springen</p>
                     <p>ESC: Pause</p>
+                    <p id="mobile-hint" style="display: none; margin-top: 10px; color: #667eea;">📱 Touch-Controls werden automatisch aktiviert</p>
                 </div>
             </div>
             <div id="pause-screen" class="screen hidden">
@@ -52,10 +53,17 @@
         </div>
     </div>
     
+    <!-- Core Systems -->
     <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
     <script src="js/assets.js"></script>
     <script src="js/sound.js"></script>
+    
+    <!-- Input Systems -->
+    <script src="js/touch.js"></script>
     <script src="js/input.js"></script>
+    
+    <!-- Game Systems -->
     <script src="js/parallax.js"></script>
     <script src="js/physics.js"></script>
     <script src="js/entities.js"></script>
