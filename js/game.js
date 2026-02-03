@@ -55,11 +55,21 @@ class Game {
         this.state = 'menu';
         this.player = null;
         this.currentLevel = null;
+        this.currentLevelId = 'world1_level1';
 
         // Game stats
         this.score = 0;
         this.timeRemaining = 300;
         this.timeAccumulator = 0;
+        this.levelStartTime = 0;
+
+        // Statistics tracking
+        this.stats = {
+            jumps: 0,
+            deaths: 0,
+            enemiesKilled: 0,
+            coinsCollected: 0
+        };
 
         // Animation
         this.lastTime = 0;
@@ -68,6 +78,21 @@ class Game {
         // Setup
         this.setupParallax();
         this.setupEventListeners();
+        this.initializeSystems();
+    }
+
+    initializeSystems() {
+        // Initialize storage system
+        if (typeof gameStorage !== 'undefined') {
+            gameStorage.init();
+            console.log('✓ Storage system initialized');
+        }
+
+        // Initialize touch controls on mobile
+        if (typeof touchControls !== 'undefined') {
+            touchControls.init();
+            console.log('✓ Touch controls initialized');
+        }
     }
 
     setupParallax() {
@@ -122,13 +147,23 @@ class Game {
         });
     }
 
-    startGame() {
+    startGame(levelId = 'world1_level1') {
         this.state = 'playing';
+        this.currentLevelId = levelId;
         this.score = 0;
         
-        this.currentLevel = this.levelManager.loadLevel('world1_level1');
+        // Reset statistics
+        this.stats = {
+            jumps: 0,
+            deaths: 0,
+            enemiesKilled: 0,
+            coinsCollected: 0
+        };
+        
+        this.currentLevel = this.levelManager.loadLevel(levelId);
         this.timeRemaining = this.currentLevel.timeLimit;
         this.timeAccumulator = 0;
+        this.levelStartTime = Date.now();
 
         this.player = new Player(this.currentLevel.startX, this.currentLevel.startY);
         this.camera.follow(this.player);
@@ -136,6 +171,11 @@ class Game {
 
         this.hideAllScreens();
         soundSystem.startMusic();
+
+        // Enable touch controls when game starts
+        if (typeof touchControls !== 'undefined' && touchControls.enabled) {
+            touchControls.show();
+        }
 
         this.lastTime = performance.now();
         this.gameLoop();
@@ -145,18 +185,41 @@ class Game {
         this.state = 'paused';
         document.getElementById('pause-screen').classList.remove('hidden');
         soundSystem.stopMusic();
+        
+        // Hide touch controls during pause
+        if (typeof touchControls !== 'undefined') {
+            touchControls.hide();
+        }
     }
 
     resumeGame() {
         this.state = 'playing';
         document.getElementById('pause-screen').classList.add('hidden');
         soundSystem.startMusic();
+        
+        // Show touch controls when resuming
+        if (typeof touchControls !== 'undefined' && touchControls.enabled) {
+            touchControls.show();
+        }
+        
         this.lastTime = performance.now();
         this.gameLoop();
     }
 
     gameOver() {
         this.state = 'gameover';
+        
+        // Hide touch controls on game over
+        if (typeof touchControls !== 'undefined') {
+            touchControls.hide();
+        }
+        
+        // Update storage with death
+        if (typeof gameStorage !== 'undefined') {
+            gameStorage.incrementStat('deaths', 1);
+            console.log('✓ Death recorded in statistics');
+        }
+        
         document.getElementById('final-score').textContent = `Score: ${this.score} | Coins: ${this.player.coins}`;
         document.getElementById('gameover-screen').classList.remove('hidden');
         soundSystem.stopMusic();
@@ -168,10 +231,50 @@ class Game {
         const timeBonus = Math.floor(this.timeRemaining * 10);
         this.score += timeBonus;
         
+        // Calculate level completion time
+        const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
+        
+        // Hide touch controls on level complete
+        if (typeof touchControls !== 'undefined') {
+            touchControls.hide();
+        }
+        
+        // Update storage with progress
+        if (typeof gameStorage !== 'undefined') {
+            const wasNewHighscore = gameStorage.updateProgress(
+                this.currentLevelId,
+                this.score,
+                completionTime,
+                this.player.coins
+            );
+            
+            // Update statistics
+            gameStorage.incrementStat('jumps', this.stats.jumps);
+            gameStorage.incrementStat('enemiesKilled', this.stats.enemiesKilled);
+            gameStorage.incrementStat('coinsCollected', this.stats.coinsCollected);
+            gameStorage.incrementStat('playTime', completionTime);
+            
+            console.log('✓ Progress saved:', {
+                level: this.currentLevelId,
+                score: this.score,
+                highscore: wasNewHighscore,
+                time: completionTime
+            });
+        }
+        
+        // Display level stats
+        const highscoreText = typeof gameStorage !== 'undefined' 
+            ? gameStorage.getHighscore(this.currentLevelId)
+            : this.score;
+            
         document.getElementById('level-stats').innerHTML = `
             <p>Coins: ${this.player.coins}</p>
             <p>Time Bonus: ${timeBonus}</p>
             <p>Total Score: ${this.score}</p>
+            <p>Highscore: ${highscoreText}</p>
+            <p style="font-size: 12px; color: #888; margin-top: 10px;">
+                Jumps: ${this.stats.jumps} | Enemies: ${this.stats.enemiesKilled}
+            </p>
         `;
         document.getElementById('level-complete-screen').classList.remove('hidden');
         soundSystem.stopMusic();
@@ -179,7 +282,36 @@ class Game {
     }
 
     loadNextLevel() {
-        this.startGame();
+        // Determine next level based on current level
+        const levelMap = {
+            'world1_level1': 'world1_level2',
+            'world1_level2': 'world1_level3',
+            'world1_level3': 'world1_level4',
+            'world1_level4': 'world2_level1',
+            'world2_level1': 'world2_level2',
+            'world2_level2': 'world2_level3',
+            'world2_level3': 'world2_level4',
+            'world2_level4': 'world3_level1',
+            'world3_level1': 'world3_level2',
+            'world3_level2': 'world3_level3',
+            'world3_level3': 'world3_level4'
+        };
+        
+        const nextLevel = levelMap[this.currentLevelId];
+        
+        if (nextLevel) {
+            // Check if next level is unlocked
+            if (typeof gameStorage !== 'undefined' && !gameStorage.isLevelUnlocked(nextLevel)) {
+                console.log('⚠ Next level locked:', nextLevel);
+                this.startGame(this.currentLevelId); // Restart current level
+            } else {
+                this.startGame(nextLevel);
+            }
+        } else {
+            // No more levels, restart from beginning
+            console.log('✓ All levels completed!');
+            this.startGame('world1_level1');
+        }
     }
 
     hideAllScreens() {
@@ -192,6 +324,7 @@ class Game {
     update(deltaTime) {
         if (this.state !== 'playing') return;
 
+        // Update timer
         this.timeAccumulator += deltaTime;
         if (this.timeAccumulator >= 1000) {
             this.timeRemaining--;
@@ -202,17 +335,26 @@ class Game {
             }
         }
 
+        // Track jump statistics
+        if (this.player.isJumping && !this.player.wasJumping) {
+            this.stats.jumps++;
+        }
+        this.player.wasJumping = this.player.isJumping;
+
         this.player.update(deltaTime, this.physics, this.currentLevel.platforms);
         this.currentLevel.update(deltaTime, this.physics);
 
+        // Coin collection
         this.currentLevel.coins.forEach(coin => {
             if (coin.active && Utils.checkCollision(this.player.getBounds(), coin.getBounds())) {
                 coin.collect();
                 this.player.collectCoin();
                 this.score += 10;
+                this.stats.coinsCollected++;
             }
         });
 
+        // Crystal collection
         this.currentLevel.crystals.forEach(crystal => {
             if (crystal.active && Utils.checkCollision(this.player.getBounds(), crystal.getBounds())) {
                 crystal.collect();
@@ -220,25 +362,33 @@ class Game {
             }
         });
 
+        // Enemy collision
         this.currentLevel.enemies.forEach(enemy => {
             const collisionType = enemy.checkPlayerCollision(this.player);
             if (collisionType === 'stomp') {
                 enemy.takeDamage();
                 this.player.velocityY = -10;
                 this.score += 20;
+                this.stats.enemiesKilled++;
             } else if (collisionType === 'hit') {
                 const isDead = this.player.takeDamage();
-                if (isDead) this.gameOver();
+                if (isDead) {
+                    this.stats.deaths++;
+                    this.gameOver();
+                }
             }
         });
 
+        // Goal check
         if (this.currentLevel.checkGoalReached(this.player)) {
             this.levelComplete();
         }
 
+        // Fall death
         if (this.player.y > this.currentLevel.height + 100) {
             const isDead = this.player.takeDamage();
             if (isDead) {
+                this.stats.deaths++;
                 this.gameOver();
             } else {
                 this.player.reset();
@@ -288,5 +438,10 @@ class Game {
             cancelAnimationFrame(this.animationId);
         }
         soundSystem.stopMusic();
+        
+        // Hide and cleanup touch controls
+        if (typeof touchControls !== 'undefined') {
+            touchControls.hide();
+        }
     }
 }
