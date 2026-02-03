@@ -2,6 +2,13 @@
 
 let game = null;
 
+// Detect if running on mobile device
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           ('ontouchstart' in window) || 
+           (navigator.maxTouchPoints > 0);
+}
+
 // Initialize game when DOM is loaded
 window.addEventListener('DOMContentLoaded', async () => {
     console.log('🎮 Crystal Rush - Loading...');
@@ -16,6 +23,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     const loadingScreen = document.getElementById('loading-screen');
     const loadingProgress = document.getElementById('loading-progress');
     const loadingText = document.getElementById('loading-text');
+    
+    // Detect mobile and show hint
+    const mobileHint = document.getElementById('mobile-hint');
+    if (isMobileDevice() && mobileHint) {
+        mobileHint.style.display = 'block';
+        console.log('📱 Mobile device detected - Touch controls will be enabled');
+    }
     
     // Load assets with progress tracking
     const progressInterval = setInterval(() => {
@@ -49,6 +63,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         
         console.log('✅ Crystal Rush - Ready to play!');
         console.log('🎯 Click "Start Game" to begin your adventure!');
+        
+        // Log available features
+        if (typeof gameStorage !== 'undefined') {
+            console.log('💾 LocalStorage: Enabled (Progress & Highscores saved)');
+        }
+        if (typeof touchControls !== 'undefined' && touchControls.enabled) {
+            console.log('🕹️ Touch Controls: Enabled');
+        }
     } catch (error) {
         console.error('Failed to load assets:', error);
         if (loadingText) {
@@ -78,16 +100,22 @@ window.addEventListener('beforeunload', () => {
 if (typeof console !== 'undefined') {
     console.log(`
     ╔═══════════════════════════════════╗
-    ║      CRYSTAL RUSH - v1.0.0       ║
+    ║      CRYSTAL RUSH - v1.2.0       ║
     ║                                   ║
     ║  🎮 Hochauflösende Grafiken    ║
     ║  🌟 Parallax-Scrolling          ║
     ║  🎵 Prozedurales Sound           ║
+    ║  💾 Fortschritt-Speicherung      ║
+    ║  📱 Touch-Controls (Mobile)      ║
     ║                                   ║
     ║  Steuerung:                       ║
     ║  ← → oder A D: Bewegung          ║
     ║  Leertaste oder W: Springen      ║
     ║  ESC: Pause                       ║
+    ║                                   ║
+    ║  Debug:                           ║
+    ║  window.debugStorage - Storage   ║
+    ║  window.debugTouch - Controls    ║
     ║                                   ║
     ║  Viel Spaß! 🚀                    ║
     ╚═══════════════════════════════════╝
