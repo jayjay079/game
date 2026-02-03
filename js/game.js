@@ -52,7 +52,7 @@ class Game {
         this.levelManager = new LevelManager();
 
         // Game state
-        this.state = 'menu'; // menu, playing, paused, gameover, levelcomplete
+        this.state = 'menu';
         this.player = null;
         this.currentLevel = null;
 
@@ -78,81 +78,32 @@ class Game {
         );
         this.parallax.addLayer(skyLayer);
 
-        // Far mountains
-        const mountainLayer = new ParallaxLayer(null, 0.1, 0);
-        for (let i = 0; i < 10; i++) {
-            mountainLayer.elements.push(
-                new Mountain(i * 400, 300, 500, 250, '#9370DB80')
-            );
-        }
-        this.parallax.addLayer(mountainLayer);
-
-        // Clouds
-        const cloudLayer = new ParallaxLayer(null, 0.2, 0);
-        for (let i = 0; i < 15; i++) {
-            cloudLayer.elements.push(
-                new Cloud(
-                    Utils.random(0, 3000),
-                    Utils.random(50, 200),
-                    Utils.random(30, 60),
-                    'rgba(255, 255, 255, 0.8)'
-                )
-            );
-        }
-        this.parallax.addLayer(cloudLayer);
-
-        // Mid hills
-        const hillLayer = new ParallaxLayer(null, 0.4, 0);
-        for (let i = 0; i < 8; i++) {
-            hillLayer.elements.push(
-                new Mountain(i * 500, 350, 600, 200, '#90EE9080')
-            );
-        }
-        this.parallax.addLayer(hillLayer);
-
-        // Trees
-        const treeLayer = new ParallaxLayer(null, 0.6, 0);
-        for (let i = 0; i < 20; i++) {
-            treeLayer.elements.push(
-                new Tree(
-                    Utils.random(0, 3000),
-                    470,
-                    Utils.random(40, 70),
-                    '#654321',
-                    '#228B22'
-                )
-            );
-        }
-        this.parallax.addLayer(treeLayer);
+        // Use real image layers - hochauflösende Grafiken!
+        this.parallax.addLayer(new ParallaxImageLayer('bg_mountains', 0.1, 100));
+        this.parallax.addLayer(new ParallaxImageLayer('bg_hills', 0.3, 200));
+        this.parallax.addLayer(new ParallaxImageLayer('bg_clouds', 0.2, 50));
+        this.parallax.addLayer(new ParallaxImageLayer('bg_trees', 0.7, 400));
+        
+        console.log('✓ Parallax mit echten Bildern initialisiert!');
     }
 
     setupEventListeners() {
-        // Start button
         document.getElementById('start-btn').addEventListener('click', () => {
             this.startGame();
         });
-
-        // Resume button
         document.getElementById('resume-btn').addEventListener('click', () => {
             this.resumeGame();
         });
-
-        // Restart button
         document.getElementById('restart-btn').addEventListener('click', () => {
             this.startGame();
         });
-
-        // Retry button
         document.getElementById('retry-btn').addEventListener('click', () => {
             this.startGame();
         });
-
-        // Next level button
         document.getElementById('next-level-btn').addEventListener('click', () => {
             this.loadNextLevel();
         });
 
-        // Pause with ESC
         let pausePressed = false;
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !pausePressed) {
@@ -172,27 +123,20 @@ class Game {
     }
 
     startGame() {
-        // Initialize game
         this.state = 'playing';
         this.score = 0;
         
-        // Load level
         this.currentLevel = this.levelManager.loadLevel('world1_level1');
         this.timeRemaining = this.currentLevel.timeLimit;
         this.timeAccumulator = 0;
 
-        // Create player
         this.player = new Player(this.currentLevel.startX, this.currentLevel.startY);
         this.camera.follow(this.player);
         this.camera.setBounds(0, this.currentLevel.width, 0, this.currentLevel.height);
 
-        // Hide menus
         this.hideAllScreens();
-
-        // Start music
         soundSystem.startMusic();
 
-        // Start game loop
         this.lastTime = performance.now();
         this.gameLoop();
     }
@@ -235,7 +179,6 @@ class Game {
     }
 
     loadNextLevel() {
-        // For now, restart same level
         this.startGame();
     }
 
@@ -249,25 +192,19 @@ class Game {
     update(deltaTime) {
         if (this.state !== 'playing') return;
 
-        // Update timer
         this.timeAccumulator += deltaTime;
         if (this.timeAccumulator >= 1000) {
             this.timeRemaining--;
             this.timeAccumulator = 0;
-            
             if (this.timeRemaining <= 0) {
                 this.gameOver();
                 return;
             }
         }
 
-        // Update player
         this.player.update(deltaTime, this.physics, this.currentLevel.platforms);
-
-        // Update level
         this.currentLevel.update(deltaTime, this.physics);
 
-        // Check collisions with coins
         this.currentLevel.coins.forEach(coin => {
             if (coin.active && Utils.checkCollision(this.player.getBounds(), coin.getBounds())) {
                 coin.collect();
@@ -276,7 +213,6 @@ class Game {
             }
         });
 
-        // Check collisions with crystals
         this.currentLevel.crystals.forEach(crystal => {
             if (crystal.active && Utils.checkCollision(this.player.getBounds(), crystal.getBounds())) {
                 crystal.collect();
@@ -284,27 +220,22 @@ class Game {
             }
         });
 
-        // Check collisions with enemies
         this.currentLevel.enemies.forEach(enemy => {
             const collisionType = enemy.checkPlayerCollision(this.player);
             if (collisionType === 'stomp') {
                 enemy.takeDamage();
-                this.player.velocityY = -10; // Bounce
+                this.player.velocityY = -10;
                 this.score += 20;
             } else if (collisionType === 'hit') {
                 const isDead = this.player.takeDamage();
-                if (isDead) {
-                    this.gameOver();
-                }
+                if (isDead) this.gameOver();
             }
         });
 
-        // Check goal
         if (this.currentLevel.checkGoalReached(this.player)) {
             this.levelComplete();
         }
 
-        // Check if player fell off
         if (this.player.y > this.currentLevel.height + 100) {
             const isDead = this.player.takeDamage();
             if (isDead) {
@@ -314,31 +245,22 @@ class Game {
             }
         }
 
-        // Update camera
         this.camera.update();
-
-        // Update parallax
         this.parallax.update(this.camera.x, this.player.velocityX);
     }
 
     draw() {
-        // Clear canvas
         this.ctx.clearRect(0, 0, this.width, this.height);
-
-        // Draw parallax background
         this.parallax.draw(this.ctx);
 
-        // Draw level
         if (this.currentLevel) {
             this.currentLevel.draw(this.ctx, this.camera);
         }
 
-        // Draw player
         if (this.player) {
             this.player.draw(this.ctx, this.camera);
         }
 
-        // Update UI
         this.updateUI();
     }
 
@@ -353,8 +275,6 @@ class Game {
 
         const deltaTime = currentTime - this.lastTime;
         this.lastTime = currentTime;
-
-        // Cap delta time to prevent huge jumps
         const cappedDelta = Math.min(deltaTime, 100);
 
         this.update(cappedDelta);
