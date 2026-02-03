@@ -1,4 +1,5 @@
 // Input Handler for Crystal Rush
+// Supports both keyboard and touch controls
 
 class InputHandler {
     constructor() {
@@ -21,37 +22,29 @@ class InputHandler {
             const key = e.key.toLowerCase();
             this.keys[key] = false;
         });
-        
-        // Touch controls for mobile
-        this.touch = {
-            left: false,
-            right: false,
-            jump: false
-        };
-        
-        this.setupTouchControls();
-    }
-    
-    setupTouchControls() {
-        // Mobile touch controls would be added here
-        // For now, keyboard only
     }
     
     isPressed(key) {
         return this.keys[key] || false;
     }
     
-    // Movement checks
+    // Movement checks (combines keyboard + touch)
     isLeft() {
-        return this.isPressed('arrowleft') || this.isPressed('a');
+        const keyboard = this.isPressed('arrowleft') || this.isPressed('a');
+        const touch = (typeof touchControls !== 'undefined' && touchControls.enabled) ? touchControls.left : false;
+        return keyboard || touch;
     }
     
     isRight() {
-        return this.isPressed('arrowright') || this.isPressed('d');
+        const keyboard = this.isPressed('arrowright') || this.isPressed('d');
+        const touch = (typeof touchControls !== 'undefined' && touchControls.enabled) ? touchControls.right : false;
+        return keyboard || touch;
     }
     
     isJump() {
-        return this.isPressed(' ') || this.isPressed('w') || this.isPressed('arrowup');
+        const keyboard = this.isPressed(' ') || this.isPressed('w') || this.isPressed('arrowup');
+        const touch = (typeof touchControls !== 'undefined' && touchControls.enabled) ? touchControls.jump : false;
+        return keyboard || touch;
     }
     
     isPause() {
