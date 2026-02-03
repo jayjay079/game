@@ -127,6 +127,30 @@ body {
     color: #667eea;
 }
 
+/* Loading Screen Styles */
+.loading-bar {
+    width: 300px;
+    height: 30px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    overflow: hidden;
+    margin: 20px auto;
+}
+
+.loading-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 15px;
+}
+
+#loading-text {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .screen {
@@ -144,5 +168,9 @@ body {
     
     #score-display {
         font-size: 18px;
+    }
+    
+    .loading-bar {
+        width: 250px;
     }
 }
