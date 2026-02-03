@@ -34,6 +34,47 @@ class ParallaxLayer {
     }
 }
 
+// NEW: Image-based Parallax Layer
+class ParallaxImageLayer {
+    constructor(imageName, scrollSpeed, offsetY = 0) {
+        this.imageName = imageName;
+        this.scrollSpeed = scrollSpeed;
+        this.offsetY = offsetY;
+        this.x = 0;
+    }
+
+    update(cameraX) {
+        this.x = -cameraX * this.scrollSpeed;
+    }
+
+    draw(ctx, canvas) {
+        const img = assetLoader.get(this.imageName);
+        if (!img || !img.complete) return;
+
+        const imgWidth = img.width;
+        const imgHeight = img.height;
+        const scale = canvas.height / imgHeight;
+        const scaledWidth = imgWidth * scale;
+
+        // Draw tiled images for seamless scrolling
+        let drawX = this.x % scaledWidth;
+        if (drawX > 0) drawX -= scaledWidth;
+
+        ctx.save();
+        while (drawX < canvas.width) {
+            ctx.drawImage(
+                img,
+                drawX,
+                this.offsetY,
+                scaledWidth,
+                canvas.height - this.offsetY
+            );
+            drawX += scaledWidth;
+        }
+        ctx.restore();
+    }
+}
+
 class ParallaxSystem {
     constructor(canvas) {
         this.canvas = canvas;
@@ -68,7 +109,7 @@ class ParallaxSystem {
     }
 }
 
-// Parallax Element Classes
+// Parallax Element Classes (keep for fallback)
 class Mountain {
     constructor(x, y, width, height, color) {
         this.x = x;
@@ -79,11 +120,7 @@ class Mountain {
     }
 
     draw(ctx, cameraX, canvasWidth) {
-        // Only draw if visible
-        if (this.x + this.width < cameraX || this.x > cameraX + canvasWidth) {
-            return;
-        }
-
+        if (this.x + this.width < cameraX || this.x > cameraX + canvasWidth) return;
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.moveTo(this.x, this.y + this.height);
@@ -103,10 +140,7 @@ class Cloud {
     }
 
     draw(ctx, cameraX, canvasWidth) {
-        if (this.x + this.size * 3 < cameraX || this.x > cameraX + canvasWidth) {
-            return;
-        }
-
+        if (this.x + this.size * 3 < cameraX || this.x > cameraX + canvasWidth) return;
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -126,15 +160,9 @@ class Tree {
     }
 
     draw(ctx, cameraX, canvasWidth) {
-        if (this.x + this.size < cameraX || this.x > cameraX + canvasWidth) {
-            return;
-        }
-
-        // Trunk
+        if (this.x + this.size < cameraX || this.x > cameraX + canvasWidth) return;
         ctx.fillStyle = this.trunkColor;
         ctx.fillRect(this.x + this.size * 0.4, this.y, this.size * 0.2, this.size * 0.6);
-
-        // Foliage
         ctx.fillStyle = this.foliageColor;
         ctx.beginPath();
         ctx.arc(this.x + this.size * 0.5, this.y - this.size * 0.2, this.size * 0.5, 0, Math.PI * 2);
