@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal Rush - A Jump & Run Adventure</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-overlay">
+            <div id="score-display">
+                <span id="coins">💎 0</span>
+                <span id="lives">❤️ 3</span>
+                <span id="time">⏱️ 300</span>
+            </div>
+            <div id="start-screen" class="screen">
+                <h1>Crystal Rush</h1>
+                <p>Sammle die gestohlenen Kristalle!</p>
+                <button id="start-btn" class="game-btn">Start Game</button>
+                <div class="controls-info">
+                    <p><strong>Steuerung:</strong></p>
+                    <p>← → oder A D: Bewegung</p>
+                    <p>Leertaste oder W: Springen</p>
+                    <p>ESC: Pause</p>
+                </div>
+            </div>
+            <div id="pause-screen" class="screen hidden">
+                <h2>Pause</h2>
+                <button id="resume-btn" class="game-btn">Weiter</button>
+                <button id="restart-btn" class="game-btn">Neustart</button>
+            </div>
+            <div id="gameover-screen" class="screen hidden">
+                <h2>Game Over</h2>
+                <p id="final-score"></p>
+                <button id="retry-btn" class="game-btn">Nochmal spielen</button>
+            </div>
+            <div id="level-complete-screen" class="screen hidden">
+                <h2>Level Complete! 🎉</h2>
+                <p id="level-stats"></p>
+                <button id="next-level-btn" class="game-btn">Nächstes Level</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/utils.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/parallax.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/level.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
