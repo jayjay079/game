@@ -1,81 +1,66 @@
 @echo off
-REM Crystal Rush - Asset Download Script
-REM Downloads all graphics to local assets folder
+REM Download high-resolution game assets from S3
+REM Crystal Rush - Asset Download Script (Windows)
+REM Updated: February 4, 2026
 
 echo ========================================
 echo Crystal Rush - Asset Downloader
 echo ========================================
 echo.
 
-REM Create assets directory structure
-if not exist "assets" mkdir assets
-if not exist "assets\sprites" mkdir assets\sprites
-if not exist "assets\backgrounds" mkdir assets\backgrounds
+REM Create directories
+if not exist "assets\sprites" mkdir "assets\sprites"
+if not exist "assets\backgrounds" mkdir "assets\backgrounds"
 
-echo Creating directories...
-echo [OK] assets\
-echo [OK] assets\sprites\
-echo [OK] assets\backgrounds\
+echo Directories created
 echo.
 
-echo Downloading sprite sheets...
+REM Download character sprite sheet
+echo Downloading character.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/a80a9e2f-93d3-4f1d-a699-2e00423be846.png" -o "assets\sprites\character.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
 echo.
 
-REM Download Character Sprite
-echo [1/8] Downloading character.png...
-curl -L -o "assets\sprites\character.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/fa44d568-0299-47bd-ae9a-df62953fcc7d.png"
-if %errorlevel% equ 0 (echo [OK] character.png) else (echo [FEHLER] character.png)
-
-REM Download Enemy Sprite
-echo [2/8] Downloading enemies.png...
-curl -L -o "assets\sprites\enemies.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/bf3bf5c5-b432-4cf5-98a0-3ec2177ddc58.png"
-if %errorlevel% equ 0 (echo [OK] enemies.png) else (echo [FEHLER] enemies.png)
-
-REM Download Items
-echo [3/8] Downloading items.png...
-curl -L -o "assets\sprites\items.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/1523642d-8b01-4138-b6f1-4d6a67778974.png"
-if %errorlevel% equ 0 (echo [OK] items.png) else (echo [FEHLER] items.png)
-
-REM Download Tileset
-echo [4/8] Downloading tileset.png...
-curl -L -o "assets\sprites\tileset.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/f0b5fa87-097c-4351-af8b-f8ce910af243.png"
-if %errorlevel% equ 0 (echo [OK] tileset.png) else (echo [FEHLER] tileset.png)
-
-echo.
-echo Downloading parallax backgrounds...
+REM Download enemy sprite sheet  
+echo Downloading enemies.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/6cba49c1-cc0a-4e61-9fee-70defc7ce5e9.png" -o "assets\sprites\enemies.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
 echo.
 
-REM Download Mountains
-echo [5/8] Downloading bg_mountains.png...
-curl -L -o "assets\backgrounds\mountains.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/772c6f02-d4ed-4230-9ce5-d0a0170acd7c.png"
-if %errorlevel% equ 0 (echo [OK] mountains.png) else (echo [FEHLER] mountains.png)
-
-REM Download Hills
-echo [6/8] Downloading bg_hills.png...
-curl -L -o "assets\backgrounds\hills.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/4559f7a6-be83-4e06-93c3-fe20966985b9.png"
-if %errorlevel% equ 0 (echo [OK] hills.png) else (echo [FEHLER] hills.png)
-
-REM Download Clouds
-echo [7/8] Downloading bg_clouds.png...
-curl -L -o "assets\backgrounds\clouds.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/5d729062-9767-4c3f-9084-3b09f7c55d8b.png"
-if %errorlevel% equ 0 (echo [OK] clouds.png) else (echo [FEHLER] clouds.png)
-
-REM Download Trees
-echo [8/8] Downloading bg_trees.png...
-curl -L -o "assets\backgrounds\trees.png" "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/59e53348-3c06-4a27-b894-627d7cee7863.png"
-if %errorlevel% equ 0 (echo [OK] trees.png) else (echo [FEHLER] trees.png)
-
+REM Download items sprite sheet
+echo Downloading items.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/e1c336e9-fd97-4478-9ff6-f559348d6598.png" -o "assets\sprites\items.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
 echo.
+
+REM Download tileset
+echo Downloading tileset.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/38320c76-644b-40a7-b447-205df89e4fd2.png" -o "assets\sprites\tileset.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
+echo.
+
+REM Download backgrounds
+echo Downloading mountains.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/6a10110f-e5db-4030-a3e1-f2679fb8e9db.png" -o "assets\backgrounds\mountains.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
+echo.
+
+echo Downloading hills.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/de65c130-14cd-474e-a48b-c786c7bdf767.png" -o "assets\backgrounds\hills.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
+echo.
+
+echo Downloading clouds.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/98c66ab9-d96a-4121-96e9-d9f25d345e14.png" -o "assets\backgrounds\clouds.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
+echo.
+
+echo Downloading trees.png...
+curl -L "https://user-gen-media-assets.s3.amazonaws.com/seedream_images/b5446f38-d28b-4988-b0f1-e8a87a1bf589.png" -o "assets\backgrounds\trees.png"
+if %errorlevel% equ 0 ( echo Downloaded ) else ( echo Failed )
+echo.
+
 echo ========================================
-echo Download abgeschlossen!
+echo Complete! Ready to play.
 echo ========================================
-echo.
-echo Grafiken gespeichert in:
-echo - assets\sprites\
-echo - assets\backgrounds\
-echo.
-echo Naechster Schritt:
-echo 1. Pruefe die Dateien im assets Ordner
-echo 2. Starte das Spiel: http://localhost/game
-echo.
 pause
