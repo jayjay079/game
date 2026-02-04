@@ -39,11 +39,18 @@ class Camera {
 class Game {
     constructor(canvas) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        this.ctx = canvas.getContext('2d', { alpha: false });
         this.width = 1200;
         this.height = 600;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+
+        // CRITICAL: Disable image smoothing globally for crisp high-res pixel art
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.mozImageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        this.ctx.msImageSmoothingEnabled = false;
+        console.log('✓ Image smoothing DISABLED for crisp graphics');
 
         // Game systems
         this.physics = new PhysicsEngine();
@@ -400,6 +407,12 @@ class Game {
     }
 
     draw() {
+        // Re-apply image smoothing settings (in case canvas was resized)
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.mozImageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        this.ctx.msImageSmoothingEnabled = false;
+        
         this.ctx.clearRect(0, 0, this.width, this.height);
         this.parallax.draw(this.ctx);
 
