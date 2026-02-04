@@ -1,8 +1,9 @@
 // Player Class for Crystal Rush
+// Complete rewrite with fixed sprite animation system
 
 class Player extends Entity {
     constructor(x, y) {
-        super(x, y, 40, 50);
+        super(x, y, 64, 64);
         
         // Movement properties
         this.speed = 5;
@@ -10,7 +11,7 @@ class Player extends Entity {
         this.maxSpeed = 8;
         
         // State
-        this.facing = 1; // 1 = right, -1 = left
+        this.facing = 1; // 1 = right, -1 = left (sprite is now facing right by default)
         this.jumping = false;
         this.canJump = true;
         this.invincible = false;
@@ -19,24 +20,41 @@ class Player extends Entity {
         // Animation
         this.animationFrame = 0;
         this.animationTimer = 0;
-        this.animationSpeed = 0.15;
-        this.currentAnimation = 'idle'; // idle, run, jump
+        this.currentAnimation = 'idle';
         
-        // FIXED: Actual sprite sheet dimensions from analysis
-        // 2048x2048 image with 64x64 frames in 32x32 grid = 1024 total frames
+        // FIXED SPRITE SHEET DIMENSIONS
+        // New character.png: 2048×512px
+        // Grid: 8 columns × 1 row
+        // Frame size: 256×512px each
         this.spriteSheet = null;
-        this.frameWidth = 64;   // Analyzed: perfect fit at 64x64
-        this.frameHeight = 64;  // Analyzed: perfect fit at 64x64
-        this.spriteScale = 1.2; // Scale up for visibility
-        this.cols = 32;         // 2048 / 64 = 32 columns
-        this.rows = 32;         // 2048 / 64 = 32 rows
+        this.frameWidth = 256;   // 2048 ÷ 8 = 256px per frame
+        this.frameHeight = 512;  // Full height
+        this.spriteScale = 0.5;  // Scale down to 128×256 for game (was too large)
+        this.cols = 8;           // 8 frames total
         
-        // Animation frame mappings (assuming standard layout)
-        // Using first few rows for main animations
+        // Animation configurations
+        // Frame indices for each animation state
         this.animations = {
-            idle: { row: 0, frames: 6 },  // Row 0, first 6 frames
-            run: { row: 1, frames: 6 },   // Row 1, first 6 frames
-            jump: { row: 2, frames: 1 }   // Row 2, first frame
+            idle: { 
+                startFrame: 0, 
+                frameCount: 4,
+                speed: 0.1  // Slow for idle breathing
+            },
+            run: { 
+                startFrame: 4, 
+                frameCount: 4,  // Frames 4, 5, 6, 7
+                speed: 0.2      // Fast for running
+            },
+            jump: { 
+                startFrame: 8,  // Single jump frame (if exists, else use idle)
+                frameCount: 1,
+                speed: 0
+            },
+            shoot: {
+                startFrame: 9,  // Frames 9, 10, 11 (if implemented)
+                frameCount: 3,
+                speed: 0.15
+            }
         };
         
         // Stats
@@ -88,31 +106,39 @@ class Player extends Entity {
         // Update physics
         physics.update(this, platforms);
         
-        // Determine animation state
+        // Determine animation state based on player state
+        let newAnimation = 'idle';
+        
         if (!this.onGround) {
-            this.currentAnimation = 'jump';
+            newAnimation = 'jump';
         } else if (Math.abs(this.velocityX) > 0.5) {
-            this.currentAnimation = 'run';
+            newAnimation = 'run';
         } else {
-            this.currentAnimation = 'idle';
+            newAnimation = 'idle';
         }
+        
+        // Reset frame counter when animation changes
+        if (newAnimation !== this.currentAnimation) {
+            this.animationFrame = 0;
+            this.animationTimer = 0;
+        }
+        
+        this.currentAnimation = newAnimation;
         
         // Update animation frame
         const anim = this.animations[this.currentAnimation];
-        if (this.currentAnimation === 'run') {
-            this.animationTimer += deltaTime * this.animationSpeed;
-            if (this.animationTimer >= 1) {
-                this.animationFrame = (this.animationFrame + 1) % anim.frames;
-                this.animationTimer = 0;
-            }
-        } else if (this.currentAnimation === 'idle') {
-            this.animationTimer += deltaTime * 0.1;
-            if (this.animationTimer >= 1) {
-                this.animationFrame = (this.animationFrame + 1) % anim.frames;
+        
+        if (anim.frameCount > 1) {
+            this.animationTimer += deltaTime;
+            
+            // Advance frame when timer exceeds speed threshold
+            if (this.animationTimer >= anim.speed) {
+                this.animationFrame = (this.animationFrame + 1) % anim.frameCount;
                 this.animationTimer = 0;
             }
         } else {
-            this.animationFrame = 0; // Jump uses frame 0
+            // Static frame (like jump)
+            this.animationFrame = 0;
         }
         
         // Update invincibility
@@ -123,7 +149,7 @@ class Player extends Entity {
             }
         }
         
-        // Load sprite sheet if not loaded
+        // Load sprite sheet if not loaded yet
         if (!this.spriteSheet) {
             this.spriteSheet = assetLoader.get('character');
         }
@@ -135,10 +161,10 @@ class Player extends Entity {
 
         ctx.save();
         
-        // CRITICAL: Proper alpha compositing for transparency
+        // Proper alpha compositing for transparency
         ctx.globalCompositeOperation = 'source-over';
         
-        // Flicker when invincible
+        // Flicker effect when invincible
         if (this.invincible && Math.floor(this.invincibleTimer / 5) % 2 === 0) {
             ctx.globalAlpha = 0.5;
         } else {
@@ -156,46 +182,57 @@ class Player extends Entity {
         }
 
         ctx.restore();
+        
+        // Debug: Draw hitbox (uncomment for debugging)
+        // this.drawDebugHitbox(ctx, screenX, screenY);
     }
 
     drawSprite(ctx, screenX, screenY) {
         // Get current animation config
         const anim = this.animations[this.currentAnimation];
-        const row = anim.row;
-        const frame = this.animationFrame % anim.frames;
+        
+        // Calculate which frame to show
+        const currentFrameIndex = anim.startFrame + this.animationFrame;
         
         // Calculate source position in sprite sheet
-        // 2048x2048 sheet, 64x64 frames, 32x32 grid
-        const sx = frame * this.frameWidth;
-        const sy = row * this.frameHeight;
+        // Horizontal strip: each frame at column * frameWidth
+        const sx = currentFrameIndex * this.frameWidth;
+        const sy = 0; // Single row sprite sheet
         
-        const drawWidth = this.frameWidth * this.spriteScale;
-        const drawHeight = this.frameHeight * this.spriteScale;
+        // Calculate draw dimensions
+        const drawWidth = this.frameWidth * this.spriteScale;   // 256 * 0.5 = 128px
+        const drawHeight = this.frameHeight * this.spriteScale; // 512 * 0.5 = 256px
         
-        // Center the sprite on player hitbox
+        // Center the sprite on player hitbox (64×64)
         const drawX = screenX + this.width / 2 - drawWidth / 2;
-        const drawY = screenY + this.height / 2 - drawHeight / 2;
+        const drawY = screenY + this.height - drawHeight; // Align bottom
         
         ctx.save();
         
         // CRITICAL: Disable image smoothing for crisp pixel art
         ctx.imageSmoothingEnabled = false;
         
-        // Flip sprite based on facing direction
+        // Flip sprite horizontally when facing left
         if (this.facing === -1) {
-            ctx.translate(drawX + drawWidth / 2, drawY + drawHeight / 2);
+            ctx.translate(drawX + drawWidth, drawY);
             ctx.scale(-1, 1);
-            ctx.translate(-(drawX + drawWidth / 2), -(drawY + drawHeight / 2));
+            ctx.drawImage(
+                this.spriteSheet,
+                sx, sy,                           // Source position
+                this.frameWidth, this.frameHeight, // Source size
+                0, 0,                             // Destination (already translated)
+                drawWidth, drawHeight             // Destination size
+            );
+        } else {
+            // Normal facing right
+            ctx.drawImage(
+                this.spriteSheet,
+                sx, sy,                           // Source position
+                this.frameWidth, this.frameHeight, // Source size
+                drawX, drawY,                     // Destination position
+                drawWidth, drawHeight             // Destination size
+            );
         }
-        
-        // Draw the sprite frame
-        ctx.drawImage(
-            this.spriteSheet,
-            sx, sy,                    // Source position
-            this.frameWidth, this.frameHeight, // Source size
-            drawX, drawY,              // Destination position
-            drawWidth, drawHeight      // Destination size
-        );
         
         ctx.restore();
     }
@@ -242,6 +279,16 @@ class Player extends Entity {
         // Backpack
         ctx.fillStyle = '#8B4513';
         ctx.fillRect(-10, -5, 8, 12);
+    }
+    
+    drawDebugHitbox(ctx, screenX, screenY) {
+        ctx.strokeStyle = '#00FF00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(screenX, screenY, this.width, this.height);
+        
+        // Draw center point
+        ctx.fillStyle = '#FF0000';
+        ctx.fillRect(screenX + this.width / 2 - 2, screenY + this.height / 2 - 2, 4, 4);
     }
 
     takeDamage() {
