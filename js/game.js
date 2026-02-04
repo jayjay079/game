@@ -95,10 +95,12 @@ class Game {
             console.log('✓ Storage system initialized');
         }
 
-        // Initialize touch controls on mobile
-        if (typeof touchControls !== 'undefined') {
+        // Initialize touch controls on mobile (with safety check)
+        if (typeof touchControls !== 'undefined' && typeof touchControls.init === 'function') {
             touchControls.init();
             console.log('✓ Touch controls initialized');
+        } else {
+            console.log('⚠ Touch controls not available (desktop mode)');
         }
     }
 
