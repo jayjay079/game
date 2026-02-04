@@ -22,13 +22,22 @@ class Player extends Entity {
         this.animationSpeed = 0.15;
         this.currentAnimation = 'idle'; // idle, run, jump
         
-        // FIXED: Correct sprite sheet properties based on actual PNG
+        // FIXED: Actual sprite sheet dimensions from analysis
+        // 2048x2048 image with 64x64 frames in 32x32 grid = 1024 total frames
         this.spriteSheet = null;
-        this.frameWidth = 100;  // Real frame size from sprite sheet
-        this.frameHeight = 100; // Real frame size from sprite sheet
-        this.spriteScale = 0.8; // Scale to fit game
-        this.cols = 6;          // 6 columns in sprite sheet
-        this.rows = 4;          // 4 rows in sprite sheet
+        this.frameWidth = 64;   // Analyzed: perfect fit at 64x64
+        this.frameHeight = 64;  // Analyzed: perfect fit at 64x64
+        this.spriteScale = 1.2; // Scale up for visibility
+        this.cols = 32;         // 2048 / 64 = 32 columns
+        this.rows = 32;         // 2048 / 64 = 32 rows
+        
+        // Animation frame mappings (assuming standard layout)
+        // Using first few rows for main animations
+        this.animations = {
+            idle: { row: 0, frames: 6 },  // Row 0, first 6 frames
+            run: { row: 1, frames: 6 },   // Row 1, first 6 frames
+            jump: { row: 2, frames: 1 }   // Row 2, first frame
+        };
         
         // Stats
         this.lives = 3;
@@ -89,16 +98,17 @@ class Player extends Entity {
         }
         
         // Update animation frame
+        const anim = this.animations[this.currentAnimation];
         if (this.currentAnimation === 'run') {
             this.animationTimer += deltaTime * this.animationSpeed;
             if (this.animationTimer >= 1) {
-                this.animationFrame = (this.animationFrame + 1) % 6; // 6 run frames
+                this.animationFrame = (this.animationFrame + 1) % anim.frames;
                 this.animationTimer = 0;
             }
         } else if (this.currentAnimation === 'idle') {
             this.animationTimer += deltaTime * 0.1;
             if (this.animationTimer >= 1) {
-                this.animationFrame = (this.animationFrame + 1) % 6; // 6 idle frames
+                this.animationFrame = (this.animationFrame + 1) % anim.frames;
                 this.animationTimer = 0;
             }
         } else {
@@ -149,39 +159,20 @@ class Player extends Entity {
     }
 
     drawSprite(ctx, screenX, screenY) {
-        // FIXED: Correct sprite sheet mapping
-        // Sprite sheet layout: 6 columns × 4 rows
-        // Row 0: Idle (6 frames)
-        // Row 1: Run (6 frames)
-        // Row 2: Jump (6 frames)
-        // Row 3: Other animations (6 frames)
+        // Get current animation config
+        const anim = this.animations[this.currentAnimation];
+        const row = anim.row;
+        const frame = this.animationFrame % anim.frames;
         
-        let row = 0;
-        let maxFrames = 6;
-        
-        switch(this.currentAnimation) {
-            case 'idle':
-                row = 0;
-                maxFrames = 6;
-                break;
-            case 'run':
-                row = 1;
-                maxFrames = 6;
-                break;
-            case 'jump':
-                row = 2;
-                maxFrames = 1; // Use only first frame of jump row
-                break;
-        }
-        
-        const frame = this.animationFrame % maxFrames;
+        // Calculate source position in sprite sheet
+        // 2048x2048 sheet, 64x64 frames, 32x32 grid
         const sx = frame * this.frameWidth;
         const sy = row * this.frameHeight;
         
         const drawWidth = this.frameWidth * this.spriteScale;
         const drawHeight = this.frameHeight * this.spriteScale;
         
-        // Center the sprite
+        // Center the sprite on player hitbox
         const drawX = screenX + this.width / 2 - drawWidth / 2;
         const drawY = screenY + this.height / 2 - drawHeight / 2;
         
@@ -197,12 +188,13 @@ class Player extends Entity {
             ctx.translate(-(drawX + drawWidth / 2), -(drawY + drawHeight / 2));
         }
         
+        // Draw the sprite frame
         ctx.drawImage(
             this.spriteSheet,
-            sx, sy,
-            this.frameWidth, this.frameHeight,
-            drawX, drawY,
-            drawWidth, drawHeight
+            sx, sy,                    // Source position
+            this.frameWidth, this.frameHeight, // Source size
+            drawX, drawY,              // Destination position
+            drawWidth, drawHeight      // Destination size
         );
         
         ctx.restore();
