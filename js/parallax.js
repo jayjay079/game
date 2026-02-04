@@ -68,6 +68,9 @@ class ParallaxImageLayer {
 
         ctx.save();
         
+        // CRITICAL: Disable image smoothing for crisp high-res graphics
+        ctx.imageSmoothingEnabled = false;
+        
         // Draw tiled images for seamless scrolling
         for (let i = 0; i < tilesNeeded; i++) {
             const drawX = startX + (i * scaledWidth);
