@@ -8,15 +8,27 @@ class TouchControls {
         this.joystick = null;
         this.buttons = {};
         this.touches = {};
+        this.initialized = false;
         
         // Control states (compatible with keyboard input)
         this.left = false;
         this.right = false;
         this.jump = false;
+    }
+
+    /**
+     * Initialize touch controls (called from game.js)
+     */
+    init() {
+        if (this.initialized) return;
         
         if (this.isMobile) {
             this.createUI();
             this.setupEventListeners();
+            this.initialized = true;
+            console.log('✅ Touch controls initialized');
+        } else {
+            console.log('⚠ Desktop mode - touch controls skipped');
         }
     }
 
@@ -221,9 +233,24 @@ class TouchControls {
      * Reset joystick to center
      */
     resetJoystick() {
+        if (!this.ui) return;
         this.ui.joystickStick.style.transform = 'translate(0, 0)';
         this.left = false;
         this.right = false;
+    }
+
+    /**
+     * Show touch controls (alias for enable)
+     */
+    show() {
+        this.enable();
+    }
+
+    /**
+     * Hide touch controls (alias for disable)
+     */
+    hide() {
+        this.disable();
     }
 
     /**
