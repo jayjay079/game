@@ -22,11 +22,13 @@ class Player extends Entity {
         this.animationSpeed = 0.15;
         this.currentAnimation = 'idle'; // idle, run, jump
         
-        // Sprite sheet properties
+        // FIXED: Correct sprite sheet properties based on actual PNG
         this.spriteSheet = null;
-        this.frameWidth = 64;
-        this.frameHeight = 64;
-        this.spriteScale = 1.2;
+        this.frameWidth = 100;  // Real frame size from sprite sheet
+        this.frameHeight = 100; // Real frame size from sprite sheet
+        this.spriteScale = 0.8; // Scale to fit game
+        this.cols = 6;          // 6 columns in sprite sheet
+        this.rows = 4;          // 4 rows in sprite sheet
         
         // Stats
         this.lives = 3;
@@ -96,7 +98,7 @@ class Player extends Entity {
         } else if (this.currentAnimation === 'idle') {
             this.animationTimer += deltaTime * 0.1;
             if (this.animationTimer >= 1) {
-                this.animationFrame = (this.animationFrame + 1) % 4; // 4 idle frames
+                this.animationFrame = (this.animationFrame + 1) % 6; // 6 idle frames
                 this.animationTimer = 0;
             }
         } else {
@@ -134,7 +136,7 @@ class Player extends Entity {
         }
 
         // Use sprite if available, otherwise fallback to procedural
-        if (this.spriteSheet && this.spriteSheet.complete) {
+        if (this.spriteSheet && this.spriteSheet.complete && this.spriteSheet.width > 0) {
             this.drawSprite(ctx, screenX, screenY);
         } else {
             // Fallback to procedural drawing
@@ -147,14 +149,20 @@ class Player extends Entity {
     }
 
     drawSprite(ctx, screenX, screenY) {
-        // Calculate sprite sheet coordinates based on animation
+        // FIXED: Correct sprite sheet mapping
+        // Sprite sheet layout: 6 columns × 4 rows
+        // Row 0: Idle (6 frames)
+        // Row 1: Run (6 frames)
+        // Row 2: Jump (6 frames)
+        // Row 3: Other animations (6 frames)
+        
         let row = 0;
-        let maxFrames = 4;
+        let maxFrames = 6;
         
         switch(this.currentAnimation) {
             case 'idle':
                 row = 0;
-                maxFrames = 4;
+                maxFrames = 6;
                 break;
             case 'run':
                 row = 1;
@@ -162,7 +170,7 @@ class Player extends Entity {
                 break;
             case 'jump':
                 row = 2;
-                maxFrames = 1;
+                maxFrames = 1; // Use only first frame of jump row
                 break;
         }
         
@@ -179,16 +187,15 @@ class Player extends Entity {
         
         ctx.save();
         
+        // CRITICAL: Disable image smoothing for crisp pixel art
+        ctx.imageSmoothingEnabled = false;
+        
         // Flip sprite based on facing direction
         if (this.facing === -1) {
             ctx.translate(drawX + drawWidth / 2, drawY + drawHeight / 2);
             ctx.scale(-1, 1);
             ctx.translate(-(drawX + drawWidth / 2), -(drawY + drawHeight / 2));
         }
-        
-        // CRITICAL: Draw with proper alpha compositing
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
         
         ctx.drawImage(
             this.spriteSheet,
