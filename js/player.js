@@ -121,13 +121,18 @@ class Player extends Entity {
         const screenX = this.x - camera.x;
         const screenY = this.y - camera.y;
 
+        ctx.save();
+        
+        // CRITICAL: Proper alpha compositing for transparency
+        ctx.globalCompositeOperation = 'source-over';
+        
         // Flicker when invincible
         if (this.invincible && Math.floor(this.invincibleTimer / 5) % 2 === 0) {
             ctx.globalAlpha = 0.5;
+        } else {
+            ctx.globalAlpha = 1.0;
         }
 
-        ctx.save();
-        
         // Use sprite if available, otherwise fallback to procedural
         if (this.spriteSheet && this.spriteSheet.complete) {
             this.drawSprite(ctx, screenX, screenY);
@@ -139,7 +144,6 @@ class Player extends Entity {
         }
 
         ctx.restore();
-        ctx.globalAlpha = 1;
     }
 
     drawSprite(ctx, screenX, screenY) {
@@ -169,19 +173,28 @@ class Player extends Entity {
         const drawWidth = this.frameWidth * this.spriteScale;
         const drawHeight = this.frameHeight * this.spriteScale;
         
+        // Center the sprite
+        const drawX = screenX + this.width / 2 - drawWidth / 2;
+        const drawY = screenY + this.height / 2 - drawHeight / 2;
+        
         ctx.save();
-        ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
         
         // Flip sprite based on facing direction
         if (this.facing === -1) {
+            ctx.translate(drawX + drawWidth / 2, drawY + drawHeight / 2);
             ctx.scale(-1, 1);
+            ctx.translate(-(drawX + drawWidth / 2), -(drawY + drawHeight / 2));
         }
+        
+        // CRITICAL: Draw with proper alpha compositing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         
         ctx.drawImage(
             this.spriteSheet,
             sx, sy,
             this.frameWidth, this.frameHeight,
-            -drawWidth / 2, -drawHeight / 2,
+            drawX, drawY,
             drawWidth, drawHeight
         );
         
