@@ -103,13 +103,13 @@ class Game {
         );
         this.parallax.addLayer(skyLayer);
 
-        // Use real image layers - hochauflösende Grafiken!
-        this.parallax.addLayer(new ParallaxImageLayer('bg_mountains', 0.1, 100));
-        this.parallax.addLayer(new ParallaxImageLayer('bg_hills', 0.3, 200));
-        this.parallax.addLayer(new ParallaxImageLayer('bg_clouds', 0.2, 50));
-        this.parallax.addLayer(new ParallaxImageLayer('bg_trees', 0.7, 400));
+        // FIXED: All offsetY = 0 for proper overlay, not vertical stacking!
+        this.parallax.addLayer(new ParallaxImageLayer('bg_mountains', 0.1, 0));
+        this.parallax.addLayer(new ParallaxImageLayer('bg_clouds', 0.2, 0));
+        this.parallax.addLayer(new ParallaxImageLayer('bg_hills', 0.3, 0));
+        this.parallax.addLayer(new ParallaxImageLayer('bg_trees', 0.7, 0));
         
-        console.log('✓ Parallax mit echten Bildern initialisiert!');
+        console.log('✓ Parallax fixed: layers overlay with transparency');
     }
 
     setupEventListeners() {
