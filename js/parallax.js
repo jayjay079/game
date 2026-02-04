@@ -34,7 +34,7 @@ class ParallaxLayer {
     }
 }
 
-// NEW: Image-based Parallax Layer
+// Image-based Parallax Layer with proper transparency
 class ParallaxImageLayer {
     constructor(imageName, scrollSpeed, offsetY = 0) {
         this.imageName = imageName;
@@ -53,24 +53,34 @@ class ParallaxImageLayer {
 
         const imgWidth = img.width;
         const imgHeight = img.height;
+        
+        // Calculate scale to fit canvas height while maintaining aspect ratio
         const scale = canvas.height / imgHeight;
         const scaledWidth = imgWidth * scale;
+        const scaledHeight = canvas.height;
 
-        // Draw tiled images for seamless scrolling
-        let drawX = this.x % scaledWidth;
-        if (drawX > 0) drawX -= scaledWidth;
+        // Calculate how many times to tile the image
+        const tilesNeeded = Math.ceil(canvas.width / scaledWidth) + 2;
+        
+        // Calculate starting position for seamless tiling
+        let startX = (this.x % scaledWidth);
+        if (startX > 0) startX -= scaledWidth;
 
         ctx.save();
-        while (drawX < canvas.width) {
+        
+        // Draw tiled images for seamless scrolling
+        for (let i = 0; i < tilesNeeded; i++) {
+            const drawX = startX + (i * scaledWidth);
+            
             ctx.drawImage(
                 img,
                 drawX,
                 this.offsetY,
                 scaledWidth,
-                canvas.height - this.offsetY
+                scaledHeight
             );
-            drawX += scaledWidth;
         }
+        
         ctx.restore();
     }
 }
@@ -99,6 +109,8 @@ class ParallaxSystem {
     }
 
     draw(ctx) {
+        // Draw all layers in order (back to front)
+        // Each layer is drawn with transparency preserved
         this.layers.forEach(layer => {
             layer.draw(ctx, this.canvas);
         });
