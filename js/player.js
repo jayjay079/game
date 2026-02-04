@@ -20,10 +20,21 @@ class Player extends Entity {
         this.animationFrame = 0;
         this.animationTimer = 0;
         this.animationSpeed = 0.15;
+        this.currentAnimation = 'idle'; // idle, run, jump
+        
+        // Sprite sheet properties
+        this.spriteSheet = null;
+        this.frameWidth = 64;
+        this.frameHeight = 64;
+        this.spriteScale = 1.2;
         
         // Stats
         this.lives = 3;
         this.coins = 0;
+        
+        // Track jumping for stats
+        this.isJumping = false;
+        this.wasJumping = false;
     }
 
     handleInput() {
@@ -40,9 +51,12 @@ class Player extends Entity {
         if (input.isJump() && this.onGround && this.canJump) {
             this.velocityY = this.jumpPower;
             this.jumping = true;
+            this.isJumping = true;
             this.canJump = false;
             this.onGround = false;
             soundSystem.playJump();
+        } else if (this.onGround) {
+            this.isJumping = false;
         }
 
         // Release jump for variable height
@@ -63,15 +77,30 @@ class Player extends Entity {
         // Update physics
         physics.update(this, platforms);
         
-        // Update animation
-        if (Math.abs(this.velocityX) > 0.5) {
+        // Determine animation state
+        if (!this.onGround) {
+            this.currentAnimation = 'jump';
+        } else if (Math.abs(this.velocityX) > 0.5) {
+            this.currentAnimation = 'run';
+        } else {
+            this.currentAnimation = 'idle';
+        }
+        
+        // Update animation frame
+        if (this.currentAnimation === 'run') {
             this.animationTimer += deltaTime * this.animationSpeed;
             if (this.animationTimer >= 1) {
-                this.animationFrame = (this.animationFrame + 1) % 4;
+                this.animationFrame = (this.animationFrame + 1) % 6; // 6 run frames
+                this.animationTimer = 0;
+            }
+        } else if (this.currentAnimation === 'idle') {
+            this.animationTimer += deltaTime * 0.1;
+            if (this.animationTimer >= 1) {
+                this.animationFrame = (this.animationFrame + 1) % 4; // 4 idle frames
                 this.animationTimer = 0;
             }
         } else {
-            this.animationFrame = 0;
+            this.animationFrame = 0; // Jump uses frame 0
         }
         
         // Update invincibility
@@ -80,6 +109,11 @@ class Player extends Entity {
             if (this.invincibleTimer <= 0) {
                 this.invincible = false;
             }
+        }
+        
+        // Load sprite sheet if not loaded
+        if (!this.spriteSheet) {
+            this.spriteSheet = assetLoader.get('character');
         }
     }
 
@@ -93,17 +127,69 @@ class Player extends Entity {
         }
 
         ctx.save();
-        ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
-        ctx.scale(this.facing, 1);
-
-        // Draw character (simplified version - will be replaced with sprite)
-        this.drawCharacter(ctx);
+        
+        // Use sprite if available, otherwise fallback to procedural
+        if (this.spriteSheet && this.spriteSheet.complete) {
+            this.drawSprite(ctx, screenX, screenY);
+        } else {
+            // Fallback to procedural drawing
+            ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
+            ctx.scale(this.facing, 1);
+            this.drawCharacter(ctx);
+        }
 
         ctx.restore();
         ctx.globalAlpha = 1;
     }
 
+    drawSprite(ctx, screenX, screenY) {
+        // Calculate sprite sheet coordinates based on animation
+        let row = 0;
+        let maxFrames = 4;
+        
+        switch(this.currentAnimation) {
+            case 'idle':
+                row = 0;
+                maxFrames = 4;
+                break;
+            case 'run':
+                row = 1;
+                maxFrames = 6;
+                break;
+            case 'jump':
+                row = 2;
+                maxFrames = 1;
+                break;
+        }
+        
+        const frame = this.animationFrame % maxFrames;
+        const sx = frame * this.frameWidth;
+        const sy = row * this.frameHeight;
+        
+        const drawWidth = this.frameWidth * this.spriteScale;
+        const drawHeight = this.frameHeight * this.spriteScale;
+        
+        ctx.save();
+        ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
+        
+        // Flip sprite based on facing direction
+        if (this.facing === -1) {
+            ctx.scale(-1, 1);
+        }
+        
+        ctx.drawImage(
+            this.spriteSheet,
+            sx, sy,
+            this.frameWidth, this.frameHeight,
+            -drawWidth / 2, -drawHeight / 2,
+            drawWidth, drawHeight
+        );
+        
+        ctx.restore();
+    }
+
     drawCharacter(ctx) {
+        // Fallback procedural drawing (original code)
         // Body - Teal jacket
         ctx.fillStyle = '#20B2AA';
         ctx.fillRect(-15, -10, 30, 35);
@@ -127,7 +213,6 @@ class Player extends Entity {
 
         // Legs
         ctx.fillStyle = '#4A4A4A';
-        const legOffset = Math.sin(this.animationFrame) * 3;
         ctx.fillRect(-12, 25, 10, 15);
         ctx.fillRect(2, 25, 10, 15);
 
